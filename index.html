@@ -59,7 +59,7 @@ let D=null,N=null;const BIS='بِسْمِ ٱللَّهِ ٱلرَّحْمَٰن�
 const LS=window.localStorage;
 let fs=+(LS.getItem('fs')||30);document.documentElement.style.setProperty('--fs',fs+'px');
 if(LS.getItem('dark')==='1')document.body.classList.add('dark');
-async function load(){if(D)return;const r=await fetch('quran.json');D=await r.json();}
+async function load(){if(D)return;const P=await Promise.all(Array.from({length:7},(_,i)=>fetch('q'+(i+1)+'.json').then(r=>r.json())));D=[].concat(...P);}
 function buildIdx(){if(N)return;N=[];D.forEach(s=>s.v.forEach((t,i)=>N.push([s.n,i+1,norm(t)])));}
 function renderList(f){const l=$('list');l.innerHTML='';const nf=f?norm(f):'';
 D.forEach(s=>{if(nf&&!(norm(s.a).includes(nf)||String(s.n)===nf||s.e.toLowerCase().includes(f.toLowerCase())))return;
