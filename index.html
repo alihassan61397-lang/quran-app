@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>المصحف الشريف</title>
+<meta name="theme-color" content="#0f5132">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="font.css">
+<style>
+:root{--bg:#fbf7ec;--fg:#1d2a22;--card:#fff;--line:#e4dcc3;--g:#0f5132;--gold:#b8923a;--fs:30px}
+body.dark{--bg:#10171a;--fg:#e8e4d6;--card:#182226;--line:#2a373c;--g:#1d7a4f;--gold:#d9b75e}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--fg);font-family:'Amiri Quran','Noto Naskh Arabic','Traditional Arabic',serif;min-height:100vh}
+header{position:sticky;top:0;z-index:5;background:var(--g);color:#fff;padding:10px 12px;display:flex;gap:8px;align-items:center;padding-top:calc(10px + env(safe-area-inset-top))}
+header h1{font-size:20px;flex:1;font-weight:400}
+button{font-family:inherit;border:0;border-radius:10px;background:#ffffff26;color:#fff;font-size:17px;padding:6px 12px;cursor:pointer}
+#q{width:100%;padding:12px 14px;margin:12px 0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-family:inherit;font-size:18px}
+main{max-width:760px;margin:0 auto;padding:0 12px 40px}
+.s{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.s .n{min-width:38px;height:38px;border-radius:50%;background:var(--g);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px}
+.s .a{font-size:24px;flex:1}.s .m{font-size:13px;color:var(--gold);font-family:system-ui,sans-serif}
+.cont{background:var(--card);border:1px solid var(--gold);border-radius:14px;padding:12px 14px;margin:12px 0;cursor:pointer;font-size:19px}
+#read{padding:8px 4px}
+.ttl{text-align:center;font-size:34px;color:var(--g);border:2px double var(--gold);border-radius:14px;padding:8px;margin:12px 0}
+body.dark .ttl{color:var(--gold)}
+.bis{text-align:center;font-size:calc(var(--fs) + 2px);margin:14px 0}
+.txt{font-size:var(--fs);line-height:2.3;text-align:justify}
+.txt .no{color:var(--gold);font-size:.62em;margin:0 4px;white-space:nowrap}
+.hit{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.hit small{color:var(--gold);font-family:system-ui,sans-serif;display:block;margin-bottom:4px}
+.hit .t{font-size:22px;line-height:2}
+.nav{display:flex;gap:8px;justify-content:space-between;margin-top:18px}.nav button{background:var(--g);flex:1;padding:10px}
+.hide{display:none}
+mark{background:#e5c97a88;color:inherit;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+<button id="back" class="hide">‹ الفهرس</button>
+<h1 id="title">المصحف الشريف</h1>
+<button id="smaller">أ-</button><button id="bigger">أ+</button><button id="mode">◐</button>
+</header>
+<main>
+<div id="home">
+<input id="q" type="search" placeholder="ابحث في السور أو الآيات…" autocomplete="off">
+<div id="cont" class="cont hide"></div>
+<div id="list"></div>
+</div>
+<div id="read" class="hide"></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const AR='٠١٢٣٤٥٦٧٨٩';const ar=n=>String(n).replace(/\d/g,d=>AR[d]);
+const norm=t=>t.normalize('NFD').replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g,'').replace(/[ٱأإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[ؤئ]/g,'ء').replace(/\s+/g,' ').trim();
+let D=null,N=null;const BIS='بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
+const LS=window.localStorage;
+let fs=+(LS.getItem('fs')||30);document.documentElement.style.setProperty('--fs',fs+'px');
+if(LS.getItem('dark')==='1')document.body.classList.add('dark');
+async function load(){if(D)return;const r=await fetch('quran.json');D=await r.json();}
+function buildIdx(){if(N)return;N=[];D.forEach(s=>s.v.forEach((t,i)=>N.push([s.n,i+1,norm(t)])));}
+function renderList(f){const l=$('list');l.innerHTML='';const nf=f?norm(f):'';
+D.forEach(s=>{if(nf&&!(norm(s.a).includes(nf)||String(s.n)===nf||s.e.toLowerCase().includes(f.toLowerCase())))return;
+const d=document.createElement('div');d.className='s';d.innerHTML='<div class="n">'+ar(s.n)+'</div><div class="a">'+s.a+'</div><div class="m">'+(s.t==='Meccan'?'مكية':'مدنية')+' · '+ar(s.v.length)+' آية</div>';
+d.onclick=()=>openSurah(s.n);l.appendChild(d);});}
+function openSurah(n,ay){const s=D[n-1];$('home').classList.add('hide');$('read').classList.remove('hide');$('back').classList.remove('hide');$('title').textContent='سورة '+s.a.replace(/^سُورَةُ\s*/,'');
+let h='<div class="ttl">'+s.a+'</div>';if(n!==1&&n!==9)h+='<div class="bis">'+BIS+'</div>';
+h+='<div class="txt">'+s.v.map((t,i)=>'<span id="a'+(i+1)+'">'+t+'</span><span class="no">﴿'+ar(i+1)+'﴾</span>').join(' ')+'</div>';
+h+='<div class="nav">'+(n<114?'<button id="nx">السورة التالية ›</button>':'')+(n>1?'<button id="pv">‹ السورة السابقة</button>':'')+'</div>';
+$('read').innerHTML=h;if($('nx'))$('nx').onclick=()=>openSurah(n+1);if($('pv'))$('pv').onclick=()=>openSurah(n-1);
+LS.setItem('last',JSON.stringify([n,ay||1]));history.replaceState(null,'','#'+n+(ay?':'+ay:''));
+if(ay){const e=$('a'+ay);if(e){e.scrollIntoView({block:'center'});e.style.background='#e5c97a88'}}else window.scrollTo(0,0);}
+function home(){$('read').classList.add('hide');$('home').classList.remove('hide');$('back').classList.add('hide');$('title').textContent='المصحف الشريف';history.replaceState(null,'','#');showCont();}
+function showCont(){const l=JSON.parse(LS.getItem('last')||'null');const c=$('cont');if(l){c.classList.remove('hide');c.textContent='أكمل القراءة: سورة '+D[l[0]-1].a.replace(/^سُورَةُ\s*/,'')+' – آية '+ar(l[1]);c.onclick=()=>openSurah(l[0],l[1]);}}
+function search(f){const nf=norm(f);if(nf.length<2){renderList(f);return;}
+buildIdx();const res=[];for(const r of N){if(r[2].includes(nf)){res.push(r);if(res.length>=60)break;}}
+renderList(f);const l=$('list');const box=document.createElement('div');
+box.innerHTML=res.length?'<div style="margin:6px 0;font-size:14px;color:var(--gold);font-family:system-ui">نتائج الآيات'+(res.length>=60?' (أول ٦٠)':'')+'</div>':'';
+res.forEach(r=>{const s=D[r[0]-1];const d=document.createElement('div');d.className='hit';d.innerHTML='<small>سورة '+s.a.replace(/^سُورَةُ\s*/,'')+' – آية '+ar(r[1])+'</small><div class="t">'+s.v[r[1]-1]+'</div>';d.onclick=()=>openSurah(r[0],r[1]);box.appendChild(d);});
+l.appendChild(box);}
+$('q').oninput=e=>search(e.target.value);
+$('back').onclick=home;
+$('bigger').onclick=()=>{fs=Math.min(56,fs+3);LS.setItem('fs',fs);document.documentElement.style.setProperty('--fs',fs+'px')};
+$('smaller').onclick=()=>{fs=Math.max(18,fs-3);LS.setItem('fs',fs);document.documentElement.style.setProperty('--fs',fs+'px')};
+$('mode').onclick=()=>{const d=document.body.classList.toggle('dark');LS.setItem('dark',d?'1':'0')};
+window.addEventListener('popstate',()=>{});
+(async()=>{await load();renderList('');showCont();const m=location.hash.match(/#(\d+)(?::(\d+))?/);if(m&&+m[1]>=1&&+m[1]<=114)openSurah(+m[1],m[2]?+m[2]:0);})();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
